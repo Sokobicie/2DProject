@@ -9,19 +9,40 @@ public class PlayerController : MonoBehaviour
     public Animator animator;
     public SpriteRenderer spriteRenderer;
 
-    // Start is called before the first frame update      
+    private bool isGrounded = false;
+    private bool isJumping = false;
+    public float jumpForce = 5f;
+    private Collider2D coll;
+    private ContactFilter2D contactFilter;
+    public LayerMask layerMask;
+    private RaycastHit2D[] results = new RaycastHit2D[10];
+    public Rigidbody2D rb;
+    
     void Start()
     {
-        
+        coll = GetComponent<Collider2D>();
+        contactFilter.SetLayerMask(layerMask);        
     }
 
-    // Update is called once per frame
     void Update()
     {
+        CheckGrounded();
         ProcessInput();
         UpdateMovement();
         UpdateAnimator();
         UpdateFacing();
+    }
+
+    private void CheckGrounded()
+    {
+        isGrounded = false;
+        // co tutaj bedziemy robic
+        int count = coll.Cast(Vector2.down, contactFilter, results, 0.1f);
+        if(count > 0)
+        {
+            isGrounded = true;
+        }
+        Debug.Log("Is grounded: " + isGrounded);
     }
 
     private void UpdateFacing()
@@ -45,15 +66,20 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateMovement()
     {
-        Vector3 velocity = new Vector3(movementSpeed, 0f);
-        velocity = velocity * horizontalInput;
-        velocity *= Time.deltaTime;
-        transform.position += velocity;
+        Vector2 velocity = rb.velocity;
+        velocity.x = horizontalInput * movementSpeed;
+
+        if(isJumping == true)
+        {
+            velocity.y = jumpForce;
+        }
+        rb.velocity = velocity;
     }
 
     private void ProcessInput()
     {
         horizontalInput = Input.GetAxis("Horizontal");
+        isJumping = Input.GetKeyDown(KeyCode.Space) && isGrounded;
     }
 
 
